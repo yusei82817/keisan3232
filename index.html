@@ -1,190 +1,53 @@
 <!doctype html>
 <html lang="ja">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Riemann Zeta Calculator</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>高精度リーマンゼータ関数計算機</title>
 <style>
-:root{color-scheme:dark;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-body{margin:0;background:#111827;color:#e5e7eb;min-height:100vh}
-main{max-width:900px;margin:auto;padding:28px 18px 50px}
-h1{font-size:clamp(1.7rem,4vw,2.5rem);margin:0 0 8px}
-.lead{color:#9ca3af;margin-top:0}
-.card{background:#1f2937;border:1px solid #374151;border-radius:16px;padding:18px;margin:16px 0;box-shadow:0 8px 30px #0004}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
-label{display:block;font-weight:700;color:#d1d5db}
-input,button{box-sizing:border-box;width:100%;margin-top:7px;border-radius:10px;border:1px solid #4b5563;background:#111827;color:#f9fafb;padding:11px 12px;font:inherit}
-button{cursor:pointer;background:#2563eb;border-color:#2563eb;font-weight:800}
-button:hover{filter:brightness(1.1)}
-.quick{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-.quick button{width:auto;margin:0;background:#374151;border-color:#4b5563}
-.result{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:1.05rem;overflow-wrap:anywhere}
-.big{font-size:clamp(1.15rem,3vw,1.7rem);font-weight:800}
-.bad{color:#fca5a5}.ok{color:#86efac}.muted{color:#9ca3af}
-code{background:#111827;padding:2px 6px;border-radius:6px}
-small{color:#9ca3af}
+:root{color-scheme:dark;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}body{margin:0;background:#111827;color:#e5e7eb}main{max-width:950px;margin:auto;padding:28px 18px 50px}.card{background:#1f2937;border:1px solid #374151;border-radius:16px;padding:18px;margin:16px 0}h1{margin:0 0 8px}.lead,.muted{color:#9ca3af}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}label{font-weight:700}input,button{box-sizing:border-box;width:100%;margin-top:7px;border-radius:10px;border:1px solid #4b5563;background:#111827;color:#f9fafb;padding:11px;font:inherit}button{cursor:pointer;background:#2563eb;border-color:#2563eb;font-weight:800}.quick{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.quick button{width:auto;background:#374151;border-color:#4b5563}.result{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;overflow-wrap:anywhere}.big{font-size:1.3rem;font-weight:800}.ok{color:#86efac}.bad{color:#fca5a5}code{background:#111827;padding:2px 6px;border-radius:6px}
 </style>
-</head>
-<body>
-<main>
-<h1>リーマンゼータ関数計算機</h1>
-<p class="lead">実数・複素数 <code>s = σ + it</code> に対する ζ(s)。解析接続も数値的に扱います。</p>
-
-<section class="card">
-<div class="grid">
-<label>実部 σ<input id="re" type="number" step="any" value="2"></label>
-<label>虚部 t<input id="im" type="number" step="any" value="0"></label>
-<label>Euler–Maclaurin N<input id="N" type="number" min="8" max="5000" step="1" value="32"></label>
-<label>補正項数<input id="terms" type="number" min="2" max="12" step="1" value="8"></label>
-</div>
-<button id="calc">ζ(s) を計算</button>
-<div class="quick">
-<button data-re="2" data-im="0">ζ(2)</button>
-<button data-re="0" data-im="0">ζ(0)</button>
-<button data-re="-1" data-im="0">ζ(-1)</button>
-<button data-re="-2" data-im="0">ζ(-2)</button>
-<button data-re="0.5" data-im="14.1347251417">最初の非自明零点付近</button>
-</div>
-</section>
-
-<section class="card">
-<h2>結果</h2>
-<div id="status" class="muted">計算待機中</div>
-<div id="value" class="result big">-</div>
-<div id="abs" class="result"></div>
-<div id="arg" class="result"></div>
-</section>
-
-<section class="card">
-<h2>計算方法</h2>
-<div id="method" class="muted">-</div>
-<p class="muted">Re(s) &gt; 0 では Euler–Maclaurin 展開を使い、Re(s) ≤ 0 では関数方程式を使って右半平面へ移します。s=1 は ζ の単純極なので有限値を返しません。</p>
-</section>
-
-<section class="card">
-<h2>数式</h2>
-<p>
-\[
-\zeta(s)=\sum_{n=1}^{\infty}n^{-s}\qquad(\operatorname{Re}s>1)
-\]
-</p>
-<p>
-解析接続では、例えば Euler–Maclaurin 型の
-\[
-\zeta(s)=\sum_{n=1}^{N}n^{-s}+\frac{N^{1-s}}{s-1}+\frac12N^{-s}+\cdots
-\]
-を利用します。
-</p>
-<p>
-左半平面では
-\[
-\zeta(s)=2^s\pi^{s-1}\sin\!\left(\frac{\pi s}{2}\right)\Gamma(1-s)\zeta(1-s)
-\]
-を使います。
-</p>
-<small>数値計算なので、極の近傍・非常に大きな |t|・極端な精度要求では誤差が増えます。</small>
-</section>
+</head><body><main>
+<h1>高精度リーマンゼータ関数計算機</h1>
+<p class="lead">任意精度の10進数で複素数 <code>s=σ+it</code> を扱います。標準のJavaScript NumberではなくBigIntベースの固定小数点演算を使用します。</p>
+<section class="card"><div class="grid">
+<label>実部 σ<input id="re" value="2"></label>
+<label>虚部 t<input id="im" value="0"></label>
+<label>精度（10進桁）<input id="digits" type="number" min="20" max="200" step="10" value="50"></label>
+<label>Euler–Maclaurin N<input id="N" type="number" min="16" max="10000" value="64"></label>
+<label>補正項数<input id="terms" type="number" min="2" max="20" value="10"></label>
+</div><button id="calc">ζ(s) を高精度計算</button><div class="quick">
+<button data-re="2" data-im="0">ζ(2)</button><button data-re="0" data-im="0">ζ(0)</button><button data-re="-1" data-im="0">ζ(-1)</button><button data-re="-2" data-im="0">ζ(-2)</button><button data-re="0.5" data-im="14.134725141734693790457251983562470270784257115699">第1零点付近</button>
+</div></section>
+<section class="card"><h2>結果</h2><div id="status" class="muted">計算待機中</div><div id="value" class="result big">-</div><div id="abs" class="result"></div><div id="arg" class="result"></div><div id="err" class="muted"></div></section>
+<section class="card"><h2>計算方法</h2><p id="method" class="muted">-</p><p class="muted">Re(s)>0ではEuler–Maclaurin型展開、Re(s)≤0では関数方程式を使用します。s=1は単純極です。高精度化では計算途中も固定小数点BigIntで保持します。</p></section>
 </main>
-
 <script>
-// Minimal complex-number implementation.
-const C=(re=0,im=0)=>({re,im});
-const add=(a,b)=>C(a.re+b.re,a.im+b.im);
-const sub=(a,b)=>C(a.re-b.re,a.im-b.im);
-const mul=(a,b)=>C(a.re*b.re-a.im*b.im,a.re*b.im+a.im*b.re);
-const scale=(a,k)=>C(a.re*k,a.im*k);
-const div=(a,b)=>{const d=b.re*b.re+b.im*b.im;return C((a.re*b.re+a.im*b.im)/d,(a.im*b.re-a.re*b.im)/d)};
-const abs=(a)=>Math.hypot(a.re,a.im);
-const arg=(a)=>Math.atan2(a.im,a.re);
-const expc=(z)=>{const e=Math.exp(z.re);return C(e*Math.cos(z.im),e*Math.sin(z.im))};
-const logc=(z)=>C(Math.log(abs(z)),arg(z));
-const powc=(a,z)=>expc(mul(z,logc(a)));
-const sinC=(z)=>C(Math.sin(z.re)*Math.cosh(z.im),Math.cos(z.re)*Math.sinh(z.im));
-
-// Bernoulli numbers B_2, B_4, ... B_24.
-const bernEven=[1/6,-1/30,1/42,-1/30,5/66,-691/2730,7/6,-3617/510,43867/798,-174611/330,854513/138,-236364091/2730];
-const factorial=(n)=>{let r=1;for(let i=2;i<=n;i++)r*=i;return r};
-
-function gamma(z){
-  // Lanczos approximation, g=7, n=9.
-  const p=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
-  if(z.re<0.5){
-    const oneMinus=sub(C(1,0),z);
-    return div(C(Math.PI,0),mul(sinC(mul(C(Math.PI,0),z)),gamma(oneMinus)));
-  }
-  let x=C(p[0],0);
-  const zm1=sub(z,C(1,0));
-  for(let i=1;i<p.length;i++) x=add(x,div(C(p[i],0),add(zm1,C(i,0))));
-  const t=add(zm1,C(7.5,0));
-  return mul(C(Math.sqrt(2*Math.PI),0),mul(powc(t,add(zm1,C(0.5,0))),mul(expc(scale(t,-1)),x)));
-}
-
-function zetaEulerMac(s,N,terms){
-  // Euler-Maclaurin representation; valid for Re(s)>0 away from s=1.
-  let sum=C(0,0);
-  for(let n=1;n<=N;n++) sum=add(sum,powc(C(n,0),scale(s,-1)));
-  const Ns=powc(C(N,0),sub(C(1,0),s));
-  sum=add(sum,div(Ns,sub(s,C(1,0))));
-  sum=add(sum,scale(powc(C(N,0),scale(s,-1)),0.5));
-  let rising=C(1,0);
-  for(let k=1;k<=terms;k++){
-    // (s)_(2k-1) = s(s+1)...(s+2k-2)
-    rising=C(1,0);
-    for(let j=0;j<2*k-1;j++) rising=mul(rising,add(s,C(j,0)));
-    const coeff=bernEven[k-1]/factorial(2*k);
-    const tail=powc(C(N,0),C(1-s.re-(2*k-1),-s.im));
-    sum=add(sum,scale(mul(rising,tail),coeff));
-  }
-  return sum;
-}
-
-function zeta(s,N=32,terms=8){
-  const eps=1e-12;
-  if(Math.abs(s.re-1)<eps && Math.abs(s.im)<eps) return null;
-  // Known special value avoids 0 * pole instability in the functional equation.
-  if(Math.abs(s.re)<eps && Math.abs(s.im)<eps) return C(-0.5,0);
-  // Trivial zeros at negative even integers.
-  if(Math.abs(s.im)<eps && s.re<0 && Math.abs(s.re-Math.round(s.re))<eps && Math.round(s.re)%2===0) return C(0,0);
-  if(s.re>0) return zetaEulerMac(s,N,terms);
-  const oneMinus=sub(C(1,0),s);
-  const factor=mul(powc(C(2,0),s),mul(powc(C(Math.PI,0),sub(s,C(1,0))),mul(sinC(scale(s,Math.PI/2)),gamma(oneMinus))));
-  return mul(factor,zeta(oneMinus,N,terms));
-}
-
-function fmt(z){
-  const r=Math.abs(z.re)<1e-14?0:z.re;
-  const i=Math.abs(z.im)<1e-14?0:z.im;
-  const rs=r.toPrecision(14);
-  const is=Math.abs(i).toPrecision(14);
-  if(i===0)return rs;
-  return `${rs} ${i>=0?'+':'-'} ${is} i`;
-}
-function calculate(){
-  const re=Number(document.getElementById('re').value);
-  const im=Number(document.getElementById('im').value);
-  const N=Math.max(8,Math.min(5000,Math.floor(Number(document.getElementById('N').value)||32)));
-  const terms=Math.max(2,Math.min(12,Math.floor(Number(document.getElementById('terms').value)||8)));
-  const s=C(re,im);
-  const status=document.getElementById('status');
-  const value=document.getElementById('value');
-  const absEl=document.getElementById('abs');
-  const argEl=document.getElementById('arg');
-  const method=document.getElementById('method');
-  if(!Number.isFinite(re)||!Number.isFinite(im)){status.textContent='入力値が不正です';status.className='bad';return}
-  if(Math.abs(re-1)<1e-12&&Math.abs(im)<1e-12){status.textContent='s = 1 は単純極。ζ(1) は発散します。';status.className='bad';value.textContent='∞（極）';absEl.textContent='';argEl.textContent='';method.textContent='計算対象外';return}
-  const z=zeta(s,N,terms);
-  if(!z||!Number.isFinite(z.re)||!Number.isFinite(z.im)){status.textContent='数値計算に失敗しました。Nや補正項数を調整してください。';status.className='bad';value.textContent='NaN';return}
-  status.textContent=`s = ${fmt(s)}`;status.className='ok';
-  value.textContent=`ζ(s) ≈ ${fmt(z)}`;
-  absEl.textContent=`|ζ(s)| ≈ ${abs(z).toPrecision(14)}`;
-  argEl.textContent=`arg ζ(s) ≈ ${arg(z).toPrecision(14)} rad`;
-  if(re>0) method.textContent=`Euler–Maclaurin 展開（N=${N}, 補正項=${terms}）`;
-  else method.textContent=`関数方程式 → ζ(1-s) を Euler–Maclaurin で評価（N=${N}, 補正項=${terms}）`;
-}
-
-document.getElementById('calc').addEventListener('click',calculate);
-document.querySelectorAll('.quick button').forEach(b=>b.addEventListener('click',()=>{document.getElementById('re').value=b.dataset.re;document.getElementById('im').value=b.dataset.im;calculate();}));
-calculate();
-</script>
-</body>
-</html>
+// Decimal arbitrary-precision complex arithmetic using BigInt fixed-point.
+class D{static P=60;constructor(n=0){if(n instanceof D)this.v=n.v;else{let s=String(n).trim();let neg=s[0]=='-';if(neg)s=s.slice(1);let [a,b='']=s.split('.');b=(b+'0'.repeat(D.P)).slice(0,D.P);this.v=BigInt((neg?'-':'')+(a||'0')+b)}}static from(v){let x=Object.create(D.prototype);x.v=BigInt(v);return x}add(b){return D.from(this.v+b.v)}sub(b){return D.from(this.v-b.v)}neg(){return D.from(-this.v)}mul(b){return D.from(this.v*b.v/D.S)}div(b){return D.from(this.v*D.S/b.v)}abs(){return D.from(this.v<0n?-this.v:this.v)}cmp(b){return this.v<b.v?-1:this.v>b.v?1:0}toString(n=30){let neg=this.v<0n,v=neg?-this.v:this.v,s=v.toString().padStart(D.P+1,'0'),a=s.slice(0,-D.P),b=s.slice(-D.P).slice(0,n).replace(/0+$/,'');return (neg?'-':'')+a+(b?'.'+b:'')}}D.S=10n**BigInt(D.P);
+const d=(x)=>new D(x), ZERO=d(0), ONE=d(1), TWO=d(2), PI=d('3.141592653589793238462643383279502884197169399375105820974944');
+function C(r=ZERO,i=ZERO){return{r:r instanceof D?r:d(r),i:i instanceof D?i:d(i)}}
+const ca=(a,b)=>C(a.r.add(b.r),a.i.add(b.i)), cs=(a,b)=>C(a.r.sub(b.r),a.i.sub(b.i)), cn=a=>C(a.r.neg(),a.i.neg()), cm=(a,b)=>C(a.r.mul(b.r).sub(a.i.mul(b.i)),a.r.mul(b.i).add(a.i.mul(b.r))), cd=(a,b)=>{let q=b.r.mul(b.r).add(b.i.mul(b.i));return C(a.r.mul(b.r).add(a.i.mul(b.i)).div(q),a.i.mul(b.r).sub(a.r.mul(b.i)).div(q))};
+const scale=(a,k)=>C(a.r.mul(k),a.i.mul(k));
+function expD(x){let y=x.v<0n?expD(x.neg()):expDpos(x);return x.v<0n?ONE.div(y):y}function expDpos(x){let term=ONE,sum=ONE;for(let k=1;k<220;k++){term=term.mul(x).div(d(k));sum=sum.add(term);if(term.abs().v<1n)break}return sum}
+function sinD(x){let y=x;while(y.cmp(PI)>0)y=y.sub(PI.mul(TWO));while(y.cmp(PI.neg())<0)y=y.add(PI.mul(TWO));let x2=y.mul(y),term=y,sum=y;for(let k=1;k<120;k++){term=term.mul(x2).div(d((2*k)*(2*k+1))).neg();sum=sum.add(term);if(term.abs().v<1n)break}return sum}
+function cosD(x){let y=x,x2=y.mul(y),term=ONE,sum=ONE;for(let k=1;k<120;k++){term=term.mul(x2).div(d((2*k-1)*(2*k))).neg();sum=sum.add(term);if(term.abs().v<1n)break}return sum}
+function sinhD(x){return expD(x).sub(expD(x.neg())).div(TWO)}function coshD(x){return expD(x).add(expD(x.neg())).div(TWO)}
+function sinC(z){return C(sinD(z.r).mul(coshD(z.i)),cosD(z.r).mul(sinhD(z.i)))}
+function expC(z){let e=expD(z.r);return C(e.mul(cosD(z.i)),e.mul(sinD(z.i)))}
+function logReal(x){if(x.v<=0n)throw Error('log domain');let n=0, y=x;while(y.cmp(TWO)>0){y=y.div(TWO);n++}let z=y.sub(ONE).div(y.add(ONE)),z2=z.mul(z),term=z,sum=z;for(let k=1;k<140;k++){term=term.mul(z2);let q=term.div(d(2*k+1));sum=sum.add(q);if(q.abs().v<1n)break}return sum.mul(TWO).add(d(n).mul(PI).mul(d('0'))).add(d(n).mul(d('0.693147180559945309417232121458176568075500134360255254120680')))}
+function logC(z){let mag=z.r.mul(z.r).add(z.i.mul(z.i));let lr=logReal(mag).div(TWO);let ratio=z.i.div(z.r);let at=atan(ratio);if(z.r.v<0n)at=z.i.v>=0n?at.add(PI):at.sub(PI);return C(lr,at)}
+function atan(x){let ax=x.abs(), y=ax.cmp(ONE)>0?ONE.div(ax):ax;let y2=y.mul(y),term=y,sum=y;for(let k=1;k<160;k++){term=term.mul(y2).neg();let q=term.div(d(2*k+1));sum=sum.add(q);if(q.abs().v<1n)break}let r=ax.cmp(ONE)>0?PI.div(TWO).sub(sum):sum;return x.v<0n?r.neg():r}
+function powC(a,z){return expC(cm(z,logC(a)))}
+function gamma(z){ // Lanczos, arbitrary precision arithmetic.
+ const p=['0.99999999999980993','676.5203681218851','-1259.1392167224028','771.32342877765313','-176.61502916214059','12.507343278686905','-0.13857109526572012','0.0000099843695780195716','0.00000015056327351493116'];
+ if(z.r.cmp(d('0.5'))<0)return cd(C(PI),cm(sinC(scale(z,PI.div(TWO))),gamma(cs(ONE,z))));let zm1=cs(z,ONE),x=d(p[0]);for(let i=1;i<p.length;i++)x=x.add(d(p[i]).div(zm1.add(d(i))));let t=zm1.add(d('7.5'));return C(d('2.5066282746310005024157652848110452530069867406099383166293').mul(powC(C(t),addD(zm1,d('0.5'))).r).mul(expD(t.neg())).mul(x));}
+function addD(a,b){return a.add(b)}
+function rising(s,n){let r=C(ONE);for(let j=0;j<n;j++)r=cm(r,ca(s,C(d(j))));return r}
+const B=['0.1666666666666666666666666666666666666666666666666666666666666667','-0.0333333333333333333333333333333333333333333333333333333333333333','0.0238095238095238095238095238095238095238095238095238095238095238','-0.0333333333333333333333333333333333333333333333333333333333333333','0.0757575757575757575757575757575757575757575757575757575757575758','-0.2531135531135531135531135531135531135531135531135531135531135531','1.1666666666666666666666666666666666666666666666666666666666666667','-7.0921568627450980392156862745098039215686274509803921568627450980','54.9711779448621553884711779448621553884711779448621553884711779449','-529.124242424242424242424242424242424242424242424242424242424242424','6192.12318840579710144927536231884057971014492753623188405797101449'];
+function powIntBase(N,z){return powC(C(d(N)),z)}
+function zetaEM(s,N,terms){let sum=C();for(let n=1;n<=N;n++)sum=ca(sum,powIntBase(n,cn(s)));sum=ca(sum,cd(powIntBase(N,cs(ONE,s)),cs(s,ONE)));sum=ca(sum,scale(powIntBase(N,cn(s)),d('0.5')));for(let k=1;k<=terms;k++){let r=rising(s,2*k-1),coeff=d(B[k-1]).div(factD(2*k));sum=ca(sum,scale(cm(r,powIntBase(N,cn(s))),coeff));}return sum}
+function factD(n){let r=ONE;for(let i=2;i<=n;i++)r=r.mul(d(i));return r}
+function zeta(s,N,terms){if(s.r.cmp(ONE)==0&&s.i.v==0n)return null;if(s.r.v==0n&&s.i.v==0n)return C(d('-0.5'));if(s.i.v==0n&&s.r.v<0n&&Number(s.r.toString(5))%2===0)return C();if(s.r.cmp(ZERO)>0)return zetaEM(s,N,terms);let om=cs(ONE,s);let f=cm(powC(C(TWO),s),cm(powC(C(PI),cs(s,ONE)),cm(sinC(scale(s,PI.div(TWO))),gamma(om))));return cm(f,zetaEM(om,N,terms))}
+function calc(){try{let digits=Math.max(20,Math.min(200,Number(document.getElementById('digits').value)||50));D.P=digits+10;D.S=10n**BigInt(D.P);let re=d(document.getElementById('re').value),im=d(document.getElementById('im').value),s=C(re,im),N=Math.max(16,Math.min(10000,Number(document.getElementById('N').value)||64)),terms=Math.max(2,Math.min(11,Number(document.getElementById('terms').value)||10));let st=document.getElementById('status'),v=document.getElementById('value');if(re.cmp(ONE)==0&&im.v==0n){st.textContent='s=1 は単純極です。';st.className='bad';v.textContent='∞（極）';return}let z=zeta(s,N,terms), out=`${z.r.toString(digits)} ${z.i.v>=0n?'+':'-'} ${z.i.abs().toString(digits)} i`;if(z.i.v==0n)out=z.r.toString(digits);st.textContent=`s = ${re.toString(digits)} ${im.v>=0n?'+':'-'} ${im.abs().toString(digits)}i`;st.className='ok';v.textContent=`ζ(s) ≈ ${out}`;document.getElementById('abs').textContent='';document.getElementById('arg').textContent='';document.getElementById('err').textContent=`内部精度: ${D.P} 桁（要求 ${digits} 桁）`;document.getElementById('method').textContent=re.cmp(ZERO)>0?`Euler–Maclaurin（N=${N}, 補正項=${terms}）`:`関数方程式 + Euler–Maclaurin（N=${N}, 補正項=${terms}）`;}catch(e){document.getElementById('status').textContent='計算エラー: '+e.message;document.getElementById('status').className='bad'}}
+document.getElementById('calc').onclick=calc;document.querySelectorAll('.quick button').forEach(b=>b.onclick=()=>{re.value=b.dataset.re;im.value=b.dataset.im;calc()});const re=document.getElementById('re'),im=document.getElementById('im');calc();
+</script></body></html>
